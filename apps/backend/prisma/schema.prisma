@@ -1,0 +1,167 @@
+// BrandCraft data model.
+// Phase 1 ships the multi-tenant foundation only (users, RBAC, businesses,
+// categories, feature flags). Later phases add products, whatsapp, ai,
+// campaigns, social, rates, etc. per docs/03_END_TO_END_IMPLEMENTATION_ROADMAP.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Identity & RBAC -------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  roles         UserRole[]
+  businessUsers BusinessUser[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique // SUPER_ADMIN | BUSINESS_OWNER | BUSINESS_ADMIN | BUSINESS_STAFF
+  description String?
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id    String           @id @default(cuid())
+  key   String           @unique // e.g. "business:create", "product:update"
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  userAgent  String?
+  ipAddress  String?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// --- Tenancy -------------------------------------------------------------
+
+enum BusinessStatus {
+  ACTIVE
+  DISABLED
+}
+
+model Category {
+  id                String   @id @default(cuid())
+  key               String   @unique // "jewellery", "restaurant", ...
+  label             String
+  rateModuleEnabled Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  businesses    Business[]
+  featureFlags  FeatureFlag[]
+
+  @@map("categories")
+}
+
+model Business {
+  id         String         @id @default(cuid())
+  name       String
+  slug       String         @unique
+  status     BusinessStatus @default(ACTIVE)
+  categoryId String
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  category     Category         @relation(fields: [categoryId], references: [id])
+  members      BusinessUser[]
+  settings     BusinessSetting?
+  featureFlags FeatureFlag[]
+
+  @@index([categoryId])
+  @@map("businesses")
+}
+
+model BusinessUser {
+  businessId String
+  userId     String
+  role       String   @default("BUSINESS_STAFF") // scoped role within the tenant
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, userId])
+  @@index([userId])
+  @@map("business_users")
+}
+
+model BusinessSetting {
+  businessId  String   @id
+  brandColors Json?
+  brandTone   String?
+  timezone    String   @default("Asia/Kolkata")
+  locale      String   @default("en-IN")
+  updatedAt   DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_settings")
+}
+
+model FeatureFlag {
+  id         String   @id @default(cuid())
+  key        String
+  enabled    Boolean  @default(false)
+  // A flag is global, category-scoped, or business-scoped (most specific wins).
+  categoryId String?
+  businessId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([key, categoryId, businessId])
+  @@map("feature_flags")
+}

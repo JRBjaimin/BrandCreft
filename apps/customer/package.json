@@ -1,0 +1,29 @@
+{
+  "name": "@brandcraft/customer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "next lint --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"(customer) no tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@brandcraft/api-client": "*",
+    "@brandcraft/types": "*",
+    "@brandcraft/validation": "*",
+    "next": "^14.2.13",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.13",
+    "typescript": "^5.6.2"
+  }
+}
