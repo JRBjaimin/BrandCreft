@@ -2,9 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@brandcraft/types', '@brandcraft/validation', '@brandcraft/api-client'],
-  experimental: {
-    typedRoutes: true,
-  },
 };
 
 export default nextConfig;

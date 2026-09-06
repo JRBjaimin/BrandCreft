@@ -1,14 +1,22 @@
-import { ApiStatus } from './api-status';
+'use client';
 
-export default function HomePage() {
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../lib/auth';
+
+export default function IndexPage() {
+  const { session, ready } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!ready) return;
+    if (!session) router.replace('/login');
+    else router.replace(session.mode === 'super' ? '/admin' : '/dashboard');
+  }, [ready, session, router]);
+
   return (
-    <main>
-      <h1>BrandCraft Admin</h1>
-      <p>
-        Phase 1 skeleton. This console will host Super Admin platform operations and Business Admin
-        management (see <code>docs/02_TECHNICAL_WORK_BREAKDOWN.md</code>).
-      </p>
-      <ApiStatus />
-    </main>
+    <div className="login-wrap">
+      <span className="muted">Loading…</span>
+    </div>
   );
 }
