@@ -10,10 +10,31 @@ end-to-end roadmap, and timeline.
 
 ## Status
 
-**Phase 1 — Architecture & Repository Foundation** (see
-`docs/03_END_TO_END_IMPLEMENTATION_ROADMAP.md`). This repo currently contains the
-monorepo skeleton only: it builds and the apps talk to the dev backend. No
-business features yet.
+**Phase 1 (foundation) + Phase 2 (multi-tenancy) in progress** — see
+`docs/03_END_TO_END_IMPLEMENTATION_ROADMAP.md`. The monorepo builds, and the
+tenant-isolation layer is in place (guard + tenant-bound Prisma client +
+demonstrator endpoints, unit-tested). No product features yet.
+
+### Multi-tenancy model
+
+Every business-owned row is scoped by `business_id`. Two layers enforce it:
+
+1. **`TenantGuard`** (`src/tenancy/tenant.guard.ts`) — on any route with a
+   `:businessId`, rejects callers who are not a member (or super admin) with 403,
+   and stashes the proven id for `@BusinessId()`.
+2. **`TenantPrismaService.forBusiness(id)`** (`src/tenancy/tenant-prisma.service.ts`)
+   — a Prisma client that injects `where.businessId` on reads/updates/deletes and
+   stamps `data.businessId` on creates for every model in
+   `src/tenancy/tenant-models.ts`. A client bound to business A cannot touch
+   business B even if an explicit id is passed.
+
+Authentication is a stand-in until Phase 3: an `x-dev-user-id` header
+(`src/auth/dev-auth.middleware.ts`, non-production only) resolves the caller and
+loads memberships from the DB. The `AuthPrincipal` shape stays; Phase 3 swaps the
+mechanism for JWT.
+
+Proof: `apps/backend/test/tenant-isolation.e2e-spec.ts` (needs Postgres —
+`npm run test:e2e --workspace @brandcraft/backend`).
 
 ## Layout
 

@@ -34,7 +34,7 @@ Published
 |---:|---|---|---|
 | 0 | Discovery & Technical Validation | All | NOT_STARTED |
 | 1 | Architecture & Repository Foundation | BE/FE/Infra | IN_PROGRESS |
-| 2 | Database & Multi-Tenant Foundation | BE/DB | NOT_STARTED |
+| 2 | Database & Multi-Tenant Foundation | BE/DB | IN_PROGRESS |
 | 3 | Authentication & RBAC | BE/Admin/Customer | NOT_STARTED |
 | 4 | Business & Category Management | Admin/BE/DB | NOT_STARTED |
 | 5 | Product Catalogue & Media | FE/BE/DB/Storage | NOT_STARTED |
@@ -174,6 +174,25 @@ User from Business A must never retrieve Business B data.
 
 ### Exit Criteria
 Tenant isolation is proven by automated tests.
+
+### Progress (2026-09-06) — IN_PROGRESS
+
+| Item | Status | Where |
+|---|---|---|
+| DB schema (users, roles, permissions, businesses, business_users, business_settings, categories, feature_flags) | COMPLETED | `apps/backend/prisma/schema.prisma` |
+| Initial migration | COMPLETED (not yet applied) | `apps/backend/prisma/migrations/20260906090000_init/` — generated via `prisma migrate diff`; run `db:migrate` against Postgres to apply |
+| business_id strategy | COMPLETED | `src/tenancy/tenant-models.ts` registry + `businessId` FK/index per table |
+| Tenant authorization | COMPLETED | `src/tenancy/tenant-access.ts` (`assertBusinessAccess`), `src/tenancy/tenant.guard.ts` (`TenantGuard`), `@BusinessId()` decorator |
+| Tenant-aware repository | COMPLETED | `src/tenancy/tenant-prisma.service.ts` — `forBusiness(id)` returns a Prisma client that injects `where.businessId` / stamps `data.businessId` for every tenant-scoped model |
+| Auth seam (pre-Phase 3) | COMPLETED | `src/auth/` — `x-dev-user-id` dev middleware, non-prod only; `AuthPrincipal` shape is Phase-3-stable |
+| Demonstrator endpoints | COMPLETED | `src/businesses/` — `GET /businesses`, `GET /businesses/:businessId`, `.../members`, `PATCH .../settings` |
+| Unit tests (access helpers + guard) | COMPLETED — green | `src/tenancy/*.spec.ts` (9 tests) |
+| Isolation e2e suite | WRITTEN — needs Postgres to run | `apps/backend/test/tenant-isolation.e2e-spec.ts`; `npm run test:e2e --workspace @brandcraft/backend` |
+| PostgreSQL RLS (optional) | DEFERRED | Needs per-request `SET LOCAL app.current_business_id` inside a transaction wrapper; app-layer scoping above is the primary control. Tracked as `TODO(phase-2-rls)`. |
+
+**Remaining to close the phase:** bring up Postgres (`npm run infra:up`), apply the
+migration, run `test:e2e` and confirm the isolation suite is green. Best done
+alongside Phase 3, which replaces the dev auth middleware with real JWT.
 
 ---
 
@@ -898,7 +917,7 @@ Update this table during development.
 |---:|---|---|---|---|---|
 | 0 | NOT_STARTED | | | | Run in parallel with Phase 1 |
 | 1 | IN_PROGRESS | | 2026-09-06 | | Monorepo scaffolded; build/typecheck/lint/test green; Docker + CI verification pending |
-| 2 | NOT_STARTED | | | | |
+| 2 | IN_PROGRESS | | 2026-09-06 | | Tenancy guard + tenant-bound Prisma client + demonstrator endpoints; 9 unit tests green; isolation e2e written, needs Postgres to run |
 | 3 | NOT_STARTED | | | | |
 | 4 | NOT_STARTED | | | | |
 | 5 | NOT_STARTED | | | | |

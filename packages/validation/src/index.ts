@@ -40,3 +40,15 @@ export const createBusinessSchema = z.object({
   ownerEmail: emailSchema,
 });
 export type CreateBusinessInput = z.infer<typeof createBusinessSchema>;
+
+const hexColor = z.string().regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Expected a hex colour');
+
+export const updateBusinessSettingsSchema = z
+  .object({
+    brandColors: z.array(hexColor).max(12).optional(),
+    brandTone: z.string().max(500).nullable().optional(),
+    timezone: z.string().min(1).max(64).optional(),
+    locale: z.string().min(2).max(35).optional(),
+  })
+  .strict();
+export type UpdateBusinessSettingsInput = z.infer<typeof updateBusinessSettingsSchema>;

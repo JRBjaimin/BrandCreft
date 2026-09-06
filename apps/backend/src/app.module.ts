@@ -8,6 +8,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { QueueModule } from './queue/queue.module';
 import { HealthModule } from './health/health.module';
+import { AuthModule } from './auth/auth.module';
+import { TenancyModule } from './tenancy/tenancy.module';
+import { BusinessesModule } from './businesses/businesses.module';
 
 @Module({
   imports: [
@@ -31,6 +34,9 @@ import { HealthModule } from './health/health.module';
     RedisModule,
     QueueModule,
     HealthModule,
+    AuthModule,
+    TenancyModule,
+    BusinessesModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })
