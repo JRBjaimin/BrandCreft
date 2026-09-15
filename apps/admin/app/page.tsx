@@ -15,7 +15,7 @@ export default function IndexPage() {
   }, [ready, session, router]);
 
   return (
-    <div className="login-wrap">
+    <div className="route-loading">
       <span className="muted">Loading…</span>
     </div>
   );

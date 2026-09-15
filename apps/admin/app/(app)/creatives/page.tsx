@@ -1,11 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import { StaggerGroup, StaggerItem } from '@brandcraft/motion';
 import { useData } from '../../../lib/mock/store';
 import { useBusiness } from '../../../lib/use-business';
 import { useAuth } from '../../../lib/auth';
 import { useToast } from '../../../components/toast';
-import { Button, Card, Chips, EmptyState, Field, PageHeader, Textarea, Thumb } from '../../../components/ui';
+import {
+  Button,
+  Card,
+  Chips,
+  EmptyState,
+  Field,
+  PageHeader,
+  Textarea,
+  Thumb,
+} from '../../../components/ui';
 import { Drawer, ConfirmDialog } from '../../../components/overlay';
 import { CreativeStatusBadge } from '../../../components/status';
 import { relTime } from '../../../lib/format';
@@ -21,7 +31,14 @@ const FILTERS = [
 ];
 
 export default function CreativesPage() {
-  const { data, approveCreative, rejectCreative, regenerateCreative, retryPublish, setActiveVersion } = useData();
+  const {
+    data,
+    approveCreative,
+    rejectCreative,
+    regenerateCreative,
+    retryPublish,
+    setActiveVersion,
+  } = useData();
   const { session } = useAuth();
   const { toast } = useToast();
   const ctx = useBusiness();
@@ -39,9 +56,11 @@ export default function CreativesPage() {
 
   const open = data.creatives.find((c) => c.id === openId) ?? null;
   const openProduct = open ? data.products.find((p) => p.id === open.productId) : null;
-  const activeVersion = open?.versions.find((v) => v.id === open.activeVersionId) ?? open?.versions[0];
+  const activeVersion =
+    open?.versions.find((v) => v.id === open.activeVersionId) ?? open?.versions[0];
 
-  const productName = (c: Creative) => data.products.find((p) => p.id === c.productId)?.name ?? 'Product';
+  const productName = (c: Creative) =>
+    data.products.find((p) => p.id === c.productId)?.name ?? 'Product';
 
   return (
     <>
@@ -59,28 +78,30 @@ export default function CreativesPage() {
           <EmptyState icon="✎" title="Nothing here" hint="No creatives match this filter." />
         </Card>
       ) : (
-        <div className="grid cols-3">
+        <StaggerGroup className="grid cols-3" trigger="mount">
           {creatives.map((c) => {
             const v = c.versions.find((x) => x.id === c.activeVersionId) ?? c.versions[0];
             return (
-              <Card key={c.id} className="row-link" >
-                <div onClick={() => setOpenId(c.id)}>
-                  <Thumb src={v?.imageUrl ?? ''} alt={productName(c)} size="lg" />
-                  <div className="card-pad">
-                    <div className="between">
-                      <strong>{productName(c)}</strong>
-                      <CreativeStatusBadge status={c.status} />
-                    </div>
-                    <div className="cell-sub mt-16">
-                      via {c.source} · {relTime(c.createdAt)}
-                      {c.versions.length > 1 ? ` · v${c.versions.length}` : ''}
+              <StaggerItem key={c.id}>
+                <Card className="row-link" style={{ height: '100%' }}>
+                  <div onClick={() => setOpenId(c.id)}>
+                    <Thumb src={v?.imageUrl ?? ''} alt={productName(c)} size="lg" />
+                    <div className="card-pad">
+                      <div className="between">
+                        <strong>{productName(c)}</strong>
+                        <CreativeStatusBadge status={c.status} />
+                      </div>
+                      <div className="cell-sub mt-16">
+                        via {c.source} · {relTime(c.createdAt)}
+                        {c.versions.length > 1 ? ` · v${c.versions.length}` : ''}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </StaggerItem>
             );
           })}
-        </div>
+        </StaggerGroup>
       )}
 
       {open && (
@@ -140,13 +161,28 @@ export default function CreativesPage() {
 
           {activeVersion && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img className="thumb lg" style={{ height: 300, marginTop: 14 }} src={activeVersion.imageUrl} alt="" />
+            <img
+              className="thumb lg"
+              style={{ height: 300, marginTop: 14 }}
+              src={activeVersion.imageUrl}
+              alt=""
+            />
           )}
 
           {open.failureReason && (
-            <div className="card" style={{ borderColor: 'var(--danger)', background: 'var(--danger-soft)', padding: 12, marginTop: 12 }}>
+            <div
+              className="card"
+              style={{
+                borderColor: 'var(--danger)',
+                background: 'var(--danger-soft)',
+                padding: 12,
+                marginTop: 12,
+              }}
+            >
               <strong style={{ color: 'var(--danger)' }}>Publish failed</strong>
-              <div className="cell-sub" style={{ color: 'var(--danger)' }}>{open.failureReason}</div>
+              <div className="cell-sub" style={{ color: 'var(--danger)' }}>
+                {open.failureReason}
+              </div>
             </div>
           )}
 

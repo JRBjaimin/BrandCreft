@@ -1,9 +1,19 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Reveal } from '@brandcraft/motion';
 import { useData } from '../../../../lib/mock/store';
 import { useToast } from '../../../../components/toast';
-import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select } from '../../../../components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+} from '../../../../components/ui';
 import { Modal } from '../../../../components/overlay';
 import { initials, relTime } from '../../../../lib/format';
 import type { Role, User } from '../../../../lib/types';
@@ -26,13 +36,15 @@ export default function AdminUsersPage() {
   const rows = useMemo(
     () =>
       data.users.filter((u) =>
-        q ? `${u.name} ${u.email} ${u.roles.join(' ')}`.toLowerCase().includes(q.toLowerCase()) : true,
+        q
+          ? `${u.name} ${u.email} ${u.roles.join(' ')}`.toLowerCase().includes(q.toLowerCase())
+          : true,
       ),
     [data.users, q],
   );
 
   const bizName = (id: string | null) =>
-    id ? data.businesses.find((b) => b.id === id)?.name ?? '—' : 'Platform';
+    id ? (data.businesses.find((b) => b.id === id)?.name ?? '—') : 'Platform';
 
   return (
     <>
@@ -47,73 +59,88 @@ export default function AdminUsersPage() {
       />
 
       <div className="toolbar">
-        <Input className="search input" placeholder="Search users…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Input
+          className="search input"
+          placeholder="Search users…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
       </div>
 
-      <Card>
-        {rows.length === 0 ? (
-          <EmptyState icon="☺" title="No users match" />
-        ) : (
-          <div className="table-wrap">
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Roles</th>
-                  <th>Scope</th>
-                  <th>Last active</th>
-                  <th>Status</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((u) => (
-                  <tr key={u.id}>
-                    <td>
-                      <div className="row">
-                        <span className="avatar">{initials(u.name)}</span>
-                        <div className="stack">
-                          <span className="cell-primary">{u.name}</span>
-                          <span className="cell-sub">{u.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="wrap-gap">
-                        {u.roles.map((r) => (
-                          <Badge key={r} tone={r === 'SUPER_ADMIN' ? 'violet' : 'grey'}>
-                            {r.replace('BUSINESS_', '').toLowerCase()}
-                          </Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="cell-sub">{bizName(u.businessId)}</td>
-                    <td className="cell-sub">{relTime(u.lastActiveAt)}</td>
-                    <td>
-                      {u.isActive ? <Badge tone="green" dot>Active</Badge> : <Badge tone="grey" dot>Disabled</Badge>}
-                    </td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <Button size="sm" variant="ghost" onClick={() => setEditing(u)}>
-                        Roles
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setUserActive(u.id, !u.isActive);
-                          toast(`${u.name} ${u.isActive ? 'disabled' : 'enabled'}`);
-                        }}
-                      >
-                        {u.isActive ? 'Disable' : 'Enable'}
-                      </Button>
-                    </td>
+      <Reveal trigger="mount">
+        <Card>
+          {rows.length === 0 ? (
+            <EmptyState icon="☺" title="No users match" />
+          ) : (
+            <div className="table-wrap">
+              <table className="data">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Roles</th>
+                    <th>Scope</th>
+                    <th>Last active</th>
+                    <th>Status</th>
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                </thead>
+                <tbody>
+                  {rows.map((u) => (
+                    <tr key={u.id}>
+                      <td>
+                        <div className="row">
+                          <span className="avatar">{initials(u.name)}</span>
+                          <div className="stack">
+                            <span className="cell-primary">{u.name}</span>
+                            <span className="cell-sub">{u.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="wrap-gap">
+                          {u.roles.map((r) => (
+                            <Badge key={r} tone={r === 'SUPER_ADMIN' ? 'violet' : 'grey'}>
+                              {r.replace('BUSINESS_', '').toLowerCase()}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="cell-sub">{bizName(u.businessId)}</td>
+                      <td className="cell-sub">{relTime(u.lastActiveAt)}</td>
+                      <td>
+                        {u.isActive ? (
+                          <Badge tone="green" dot>
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge tone="grey" dot>
+                            Disabled
+                          </Badge>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <Button size="sm" variant="ghost" onClick={() => setEditing(u)}>
+                          Roles
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setUserActive(u.id, !u.isActive);
+                            toast(`${u.name} ${u.isActive ? 'disabled' : 'enabled'}`);
+                          }}
+                        >
+                          {u.isActive ? 'Disable' : 'Enable'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </Reveal>
 
       {creating && (
         <Modal
@@ -146,7 +173,11 @@ export default function AdminUsersPage() {
             <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
           </Field>
           <Field label="Email">
-            <Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+            <Input
+              type="email"
+              value={f.email}
+              onChange={(e) => setF({ ...f, email: e.target.value })}
+            />
           </Field>
           <Field label="Role">
             <Select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as Role })}>
@@ -159,7 +190,10 @@ export default function AdminUsersPage() {
           </Field>
           {f.role !== 'SUPER_ADMIN' && (
             <Field label="Business">
-              <Select value={f.businessId} onChange={(e) => setF({ ...f, businessId: e.target.value })}>
+              <Select
+                value={f.businessId}
+                onChange={(e) => setF({ ...f, businessId: e.target.value })}
+              >
                 {data.businesses.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}

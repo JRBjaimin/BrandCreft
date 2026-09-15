@@ -12,14 +12,21 @@
   },
   "dependencies": {
     "@brandcraft/api-client": "*",
+    "@brandcraft/motion": "*",
+    "@brandcraft/storefront-data": "*",
     "@brandcraft/types": "*",
     "@brandcraft/validation": "*",
+    "framer-motion": "^11.11.17",
+    "gsap": "^3.12.5",
+    "lottie-react": "^2.4.0",
     "next": "^14.2.13",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.16.10",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.57.1",

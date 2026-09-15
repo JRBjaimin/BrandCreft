@@ -8,19 +8,46 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { CountUp, SPRING_SNAPPY } from '@brandcraft/motion';
 
 /* ---------------- Button ---------------- */
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  | 'onDrag'
+  | 'onDragStart'
+  | 'onDragEnd'
+  | 'onAnimationStart'
+  | 'onAnimationEnd'
+  | 'onAnimationIteration'
+> & {
   variant?: 'default' | 'primary' | 'danger' | 'ghost';
   size?: 'md' | 'sm';
 };
 
-export function Button({ variant = 'default', size = 'md', className = '', ...rest }: ButtonProps) {
+export function Button({
+  variant = 'default',
+  size = 'md',
+  className = '',
+  disabled,
+  ...rest
+}: ButtonProps) {
+  const reduceMotion = useReducedMotion();
   const cls = ['btn', variant !== 'default' ? variant : '', size === 'sm' ? 'sm' : '', className]
     .filter(Boolean)
     .join(' ');
-  return <button className={cls} {...rest} />;
+  const interactive = !disabled && !reduceMotion;
+  return (
+    <motion.button
+      className={cls}
+      disabled={disabled}
+      whileHover={interactive ? { scale: 1.035 } : undefined}
+      whileTap={interactive ? { scale: 0.96 } : undefined}
+      transition={SPRING_SNAPPY}
+      {...rest}
+    />
+  );
 }
 
 /* ---------------- Badge ---------------- */
@@ -59,10 +86,19 @@ export function Card({
   style?: CSSProperties;
   onClick?: () => void;
 }) {
+  const reduceMotion = useReducedMotion();
+  const interactive = Boolean(onClick) && !reduceMotion;
   return (
-    <div className={`card ${pad ? 'card-pad' : ''} ${className}`} style={style} onClick={onClick}>
+    <motion.div
+      className={`card ${pad ? 'card-pad' : ''} ${className}`}
+      style={style}
+      onClick={onClick}
+      whileHover={interactive ? { y: -6 } : undefined}
+      whileTap={interactive ? { scale: 0.985 } : undefined}
+      transition={SPRING_SNAPPY}
+    >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -91,8 +127,16 @@ export function StatCard({
   return (
     <div className="card stat">
       <div className="label">{label}</div>
-      <div className="value">{value}</div>
-      {delta && <div className={`delta ${trend === 'flat' ? '' : trend ?? ''}`}>{delta}</div>}
+      {typeof value === 'number' ? (
+        <CountUp
+          value={value}
+          className="value"
+          format={(n) => Math.round(n).toLocaleString('en-IN')}
+        />
+      ) : (
+        <div className="value">{value}</div>
+      )}
+      {delta && <div className={`delta ${trend === 'flat' ? '' : (trend ?? '')}`}>{delta}</div>}
     </div>
   );
 }
@@ -138,7 +182,11 @@ export function Field({
     <div className={`field ${full ? 'full' : ''}`}>
       {label && <label>{label}</label>}
       {children}
-      {error ? <span className="err">{error}</span> : hint ? <span className="hint">{hint}</span> : null}
+      {error ? (
+        <span className="err">{error}</span>
+      ) : hint ? (
+        <span className="hint">{hint}</span>
+      ) : null}
     </div>
   );
 }
@@ -208,17 +256,20 @@ export function Chips({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const reduceMotion = useReducedMotion();
   return (
     <div className="chips">
       {options.map((o) => (
-        <button
+        <motion.button
           key={o.value}
           className={`chip ${value === o.value ? 'active' : ''}`}
           onClick={() => onChange(o.value)}
           type="button"
+          whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+          transition={SPRING_SNAPPY}
         >
           {o.label}
-        </button>
+        </motion.button>
       ))}
     </div>
   );

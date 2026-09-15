@@ -28,7 +28,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   if (!ready || !session) {
     return (
-      <div className="login-wrap">
+      <div className="route-loading">
         <span className="muted">Loading…</span>
       </div>
     );

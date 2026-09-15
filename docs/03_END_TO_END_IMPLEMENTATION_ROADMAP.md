@@ -38,7 +38,7 @@ Published
 | 3 | Authentication & RBAC | BE/Admin/Customer | NOT_STARTED |
 | 4 | Business & Category Management | Admin/BE/DB | NOT_STARTED |
 | 5 | Product Catalogue & Media | FE/BE/DB/Storage | NOT_STARTED |
-| 6 | Customer Storefront/PWA | Customer FE/BE | NOT_STARTED |
+| 6 | Customer Storefront/PWA | Customer FE/BE | IN_PROGRESS |
 | 7 | WhatsApp Integration POC | BE/Integration | NOT_STARTED |
 | 8 | AI Creative Engine | AI/BE/Workers | NOT_STARTED |
 | 9 | Campaign & Festival Engine | FE/BE/AI | NOT_STARTED |
@@ -69,6 +69,17 @@ Published
 - `DEFERRED`
 
 Update the Status column as implementation progresses.
+
+---
+
+# Known Gaps — Frontend Ahead of Backend (as of 2026-09-07)
+
+A codebase audit found this tracker had drifted from reality in both directions. Recording it here so future planning starts from ground truth rather than this table alone.
+
+1. **Admin console frontend is far more complete than the phase table shows.** A full 16-route admin console (dashboard, products, campaigns, creatives, integrations, rates, and a super-admin console covering businesses/users/operations/platform) already exists at `apps/admin`, built entirely on an in-memory + localStorage mock store (`apps/admin/lib/mock/store.tsx`) with **zero backend wiring**. It loosely covers UI surface area for Phases 4, 5, 8, 9, 11, 12, 13, and 14, none of which this table currently reflects as started. Their Status cells are left `NOT_STARTED` deliberately: a phase requires FE **and** BE **and** DB per this doc's own criteria, and none of those phases have backend/DB work done.
+2. **Type divergence between the admin mock layer and the real backend contract.** `apps/admin/lib/types.ts` is a fully separate, hand-authored type system (`Business`, `Product`, `Campaign`, `Creative`, `RatePoint`, etc.) that diverges from `@brandcraft/types` and `prisma/schema.prisma` — e.g. the mock `Business` has ~15 fields including `plan`, `gstin`, `socials`, `branding`, none of which exist on the real `Business` model, and uses `categoryKey: string` where the real schema has `categoryId` (a FK to `Category.id`, not to `Category.key`). None of `Product`, `Campaign`, `Creative`, or a rate model exist in Prisma at all yet. Reconciling this is required before admin can be wired to a real API — track it against Phases 5/8/9/12.
+3. **Customer storefront (Phase 6) has since been built** (frontend, mock data) — see the Phase 6 progress note. It correctly used a **fresh** shared package (`packages/storefront-data`), typed against `@brandcraft/types` rather than repeating the admin mock's divergence, specifically so this gap doesn't compound. Admin's mock layer has not been migrated onto this package — that migration is future work, not done here, to avoid destabilizing a working admin console in the same pass.
+4. **No public (unauthenticated) backend endpoints exist.** Every `/businesses/*` route requires `TenantGuard`. A real customer storefront needs public "business by slug" / "products by business" endpoints — not yet designed or built.
 
 ---
 
@@ -311,6 +322,22 @@ Business can manage a complete catalogue.
 
 ### Exit Criteria
 A customer can open a business link/QR and contact the correct business.
+
+### Progress (2026-09-07) — IN_PROGRESS
+
+| Item | Status | Where |
+|---|---|---|
+| Storefront data-access seam | COMPLETED | `packages/storefront-data` — `StorefrontDataProvider` interface + `createStorefrontDataProvider()` factory. Today it only returns a mock implementation; adding an `api` branch backed by `@brandcraft/api-client` once the backend items below exist requires no page changes in `apps/customer`. |
+| Business landing page, branding, offers | COMPLETED (mock data) | `apps/customer/app/[businessSlug]/page.tsx`, `components/storefront/BusinessHero.tsx`, `OfferRibbon.tsx` |
+| Product catalogue, search, filters | COMPLETED (mock data) | `apps/customer/app/[businessSlug]/products/page.tsx`, `components/storefront/ProductCatalogue.tsx` |
+| Product detail (attributes, price, availability) | COMPLETED (mock data) | `apps/customer/app/[businessSlug]/products/[productId]/page.tsx` |
+| Like/favourite, share, WhatsApp enquiry | COMPLETED (mock/local) | `components/storefront/FavouriteButton.tsx` (anonymous, localStorage — no customer account exists yet), `ShareButton.tsx`, `WhatsAppButton.tsx` (real `wa.me` deep link) |
+| QR product/business pages | COMPLETED | `components/storefront/QrCode.tsx` (`qrcode` package — the one deliberate new dependency in either frontend app) |
+| Rates module (category-gated) | COMPLETED (mock data) | `apps/customer/app/[businessSlug]/rates/page.tsx`, `components/storefront/RatesWidget.tsx` — only renders when `category.rateModuleEnabled`; explicitly surfaces a "Stale" badge rather than silently presenting old data as live, per doc 01 §10 |
+| Responsive design + PWA | COMPLETED | Custom design-token CSS (`apps/customer/app/globals.css`); real `icon-192.png`/`icon-512.png` generated (previously referenced by the manifest but missing) |
+| Public business/product backend APIs, enquiry tracking | NOT_STARTED | No public (unauthenticated) endpoints exist yet — see Known Gaps below |
+
+**Scope note:** this pass was frontend-only, per explicit sequencing ("complete the FE with mock data first"). `prisma/schema.prisma` still has no `Product`/`Campaign`/`Rate` models (see Phase 5/8/9/12 backend items, all still NOT_STARTED) and the backend has no public storefront endpoints. The Phase 6 exit criteria ("a customer can open a business link/QR and contact the correct business") is met end-to-end against mock data, not yet against real tenant data.
 
 ---
 
@@ -921,7 +948,7 @@ Update this table during development.
 | 3 | NOT_STARTED | | | | |
 | 4 | NOT_STARTED | | | | |
 | 5 | NOT_STARTED | | | | |
-| 6 | NOT_STARTED | | | | |
+| 6 | IN_PROGRESS | | 2026-09-07 | | Storefront FE built on mock data (`packages/storefront-data` + `apps/customer`); public BE endpoints and Product/Rate DB schema not started |
 | 7 | NOT_STARTED | | | | |
 | 8 | NOT_STARTED | | | | |
 | 9 | NOT_STARTED | | | | |

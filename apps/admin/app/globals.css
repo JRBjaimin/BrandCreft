@@ -28,13 +28,12 @@
   --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.06);
   --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.14);
   --sidebar-w: 244px;
-  --font:
-    system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     --bg: #0f1115;
     --surface: #171a21;
     --surface-2: #1e222b;
@@ -60,7 +59,7 @@
   }
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --bg: #0f1115;
   --surface: #171a21;
   --surface-2: #1e222b;
@@ -202,6 +201,7 @@ button {
 }
 
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -221,9 +221,18 @@ button {
 }
 
 .nav-item.active {
-  background: var(--primary-soft);
   color: var(--primary);
   font-weight: 600;
+}
+
+/* Sliding active-nav indicator (see components/shell.tsx) — painted behind
+   the icon/label/count, which get position:relative + z-index:1 inline. */
+.nav-active-pill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--primary-soft);
+  border-radius: var(--radius-sm);
 }
 
 .nav-item .ico {
@@ -322,6 +331,11 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 .card-pad {
@@ -885,21 +899,92 @@ table.data .row-link {
   box-shadow: var(--shadow-lg);
   font-weight: 550;
   min-width: 220px;
-  animation: slideIn 0.18s ease;
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateY(8px);
-    opacity: 0;
-  }
+.route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
 }
 
 .login-wrap {
   min-height: 100vh;
   display: grid;
-  place-items: center;
+  grid-template-columns: 1.1fr 1fr;
+}
+
+@media (max-width: 900px) {
+  .login-wrap {
+    grid-template-columns: 1fr;
+  }
+  .login-brand-panel {
+    display: none;
+  }
+}
+
+.login-brand-panel {
+  position: relative;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.14), transparent 42%),
+    linear-gradient(155deg, var(--primary) 0%, #3327a8 55%, #171337 100%);
+  color: #fff;
+  padding: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.login-brand-panel .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 19px;
+}
+
+.login-brand-panel h2 {
+  font-size: 30px;
+  line-height: 1.28;
+  max-width: 380px;
+  margin: 22px 0 0;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.login-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.login-highlight {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.86);
+  max-width: 380px;
+}
+
+.login-highlight .ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.login-form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
+  background: var(--bg);
 }
 
 .login-card {
@@ -911,6 +996,23 @@ table.data .row-link {
   padding: 32px;
 }
 
+.login-success-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .login-card .brand {
   display: flex;
   align-items: center;
@@ -918,6 +1020,113 @@ table.data .row-link {
   font-weight: 700;
   font-size: 18px;
   margin-bottom: 6px;
+}
+
+.form-alert {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field .input {
+  padding-right: 56px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 8px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.divider-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 22px 0 10px;
+}
+
+.divider-label::before,
+.divider-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.demo-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.demo-account-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.demo-account-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .seg {

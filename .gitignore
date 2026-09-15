@@ -39,3 +39,7 @@ apps/backend/prisma/*.db
 # Local storage / uploads
 .data/
 uploads/
+
+# Claude Code local session/worktree state — never commit (can contain full
+# worktree checkouts with their own node_modules).
+.claude/

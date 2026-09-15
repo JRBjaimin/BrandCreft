@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { SPRING_BOUNCY, SPRING_SNAPPY } from '@brandcraft/motion';
 import { useAuth } from '../lib/auth';
 import { useData } from '../lib/mock/store';
 import { initials } from '../lib/format';
@@ -20,6 +22,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { session } = useAuth();
   const { data } = useData();
+  const reduceMotion = useReducedMotion();
   if (!session) return null;
 
   const bizId = session.activeBusinessId;
@@ -50,7 +53,7 @@ export function Sidebar() {
   ];
 
   const nav = session.mode === 'super' ? superNav : businessNav;
-  const sectionLabel = session.mode === 'super' ? 'Super Admin' : business?.name ?? 'Business';
+  const sectionLabel = session.mode === 'super' ? 'Super Admin' : (business?.name ?? 'Business');
 
   return (
     <aside className="sidebar">
@@ -60,12 +63,30 @@ export function Sidebar() {
       </div>
       <div className="sidebar-section">{sectionLabel}</div>
       {nav.map((n) => {
-        const active = pathname === n.href || (n.href !== '/dashboard' && n.href !== '/admin' && pathname.startsWith(n.href));
+        const active =
+          pathname === n.href ||
+          (n.href !== '/dashboard' && n.href !== '/admin' && pathname.startsWith(n.href));
         return (
           <Link key={n.href} href={n.href} className={`nav-item ${active ? 'active' : ''}`}>
-            <span className="ico">{n.icon}</span>
-            {n.label}
-            {n.badge ? <span className="count">{n.badge}</span> : null}
+            {active &&
+              (reduceMotion ? (
+                <span className="nav-active-pill" />
+              ) : (
+                <motion.span
+                  layoutId="nav-active-pill"
+                  className="nav-active-pill"
+                  transition={SPRING_SNAPPY}
+                />
+              ))}
+            <span className="ico" style={{ position: 'relative', zIndex: 1 }}>
+              {n.icon}
+            </span>
+            <span style={{ position: 'relative', zIndex: 1 }}>{n.label}</span>
+            {n.badge ? (
+              <span className="count" style={{ position: 'relative', zIndex: 1 }}>
+                {n.badge}
+              </span>
+            ) : null}
           </Link>
         );
       })}
@@ -75,7 +96,15 @@ export function Sidebar() {
       <div className="nav-item" style={{ cursor: 'default' }}>
         <span className="avatar">{initials(session.name)}</span>
         <span className="stack" style={{ overflow: 'hidden' }}>
-          <span style={{ fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span
+            style={{
+              fontWeight: 600,
+              color: 'var(--text)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
             {session.name}
           </span>
           <span className="cell-sub">{session.email}</span>
@@ -85,10 +114,22 @@ export function Sidebar() {
   );
 }
 
+const DROPDOWN_TRANSITION = { duration: 0.16 };
+const dropdownMotionProps = (reduceMotion: boolean | null) =>
+  reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: -8, scale: 0.97 },
+        animate: { opacity: 1, y: 0, scale: 1 },
+        exit: { opacity: 0, y: -8, scale: 0.97 },
+        transition: DROPDOWN_TRANSITION,
+      };
+
 export function Topbar() {
   const { session, setMode, setActiveBusiness, logout } = useAuth();
   const { data, markNotificationsRead } = useData();
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const [switcher, setSwitcher] = useState(false);
   const [menu, setMenu] = useState(false);
   const [notif, setNotif] = useState(false);
@@ -102,7 +143,9 @@ export function Topbar() {
     <header className="topbar">
       <button className="context-switch" onClick={() => setSwitcher(true)}>
         <small>{session.mode === 'super' ? 'Console' : 'Business'}</small>
-        <strong>{session.mode === 'super' ? 'Super Admin' : business?.name ?? 'Select business'}</strong>
+        <strong>
+          {session.mode === 'super' ? 'Super Admin' : (business?.name ?? 'Select business')}
+        </strong>
         <span className="faint">▾</span>
       </button>
 
@@ -110,31 +153,50 @@ export function Topbar() {
 
       <div style={{ position: 'relative' }}>
         <button className="icon-btn" onClick={() => setNotif((v) => !v)} aria-label="Notifications">
-          🔔{unread ? <span className="count" style={{ position: 'absolute', top: -2, right: -2 }}>{unread}</span> : null}
+          🔔
+          {unread ? (
+            <span className="count" style={{ position: 'absolute', top: -2, right: -2 }}>
+              {unread}
+            </span>
+          ) : null}
         </button>
-        {notif && (
-          <div
-            className="card"
-            style={{ position: 'absolute', right: 0, top: 38, width: 320, zIndex: 40, boxShadow: 'var(--shadow-lg)' }}
-          >
-            <div className="card-head">
-              <h3>Notifications</h3>
-              <div className="actions">
-                <button className="btn ghost sm" onClick={markNotificationsRead}>
-                  Mark all read
-                </button>
-              </div>
-            </div>
-            <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-              {data.notifications.map((n) => (
-                <div key={n.id} className="card-pad" style={{ borderBottom: '1px solid var(--border)', opacity: n.read ? 0.6 : 1 }}>
-                  <div style={{ fontWeight: 600 }}>{n.title}</div>
-                  <div className="cell-sub">{n.body}</div>
+        <AnimatePresence>
+          {notif && (
+            <motion.div
+              className="card"
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 38,
+                width: 320,
+                zIndex: 40,
+                boxShadow: 'var(--shadow-lg)',
+              }}
+              {...dropdownMotionProps(reduceMotion)}
+            >
+              <div className="card-head">
+                <h3>Notifications</h3>
+                <div className="actions">
+                  <button className="btn ghost sm" onClick={markNotificationsRead}>
+                    Mark all read
+                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+              <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                {data.notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className="card-pad"
+                    style={{ borderBottom: '1px solid var(--border)', opacity: n.read ? 0.6 : 1 }}
+                  >
+                    <div style={{ fontWeight: 600 }}>{n.title}</div>
+                    <div className="cell-sub">{n.body}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div style={{ position: 'relative' }}>
@@ -142,28 +204,38 @@ export function Topbar() {
           <span className="avatar">{initials(session.name)}</span>
           <span className="faint">▾</span>
         </button>
-        {menu && (
-          <div
-            className="card"
-            style={{ position: 'absolute', right: 0, top: 44, width: 200, zIndex: 40, boxShadow: 'var(--shadow-lg)' }}
-          >
-            <div className="card-pad stack">
-              <strong>{session.name}</strong>
-              <span className="cell-sub">{session.email}</span>
-            </div>
-            <div className="divider" style={{ margin: 0 }} />
-            <button
-              className="nav-item"
-              style={{ width: '100%' }}
-              onClick={() => {
-                logout();
-                router.push('/login');
+        <AnimatePresence>
+          {menu && (
+            <motion.div
+              className="card"
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 44,
+                width: 200,
+                zIndex: 40,
+                boxShadow: 'var(--shadow-lg)',
               }}
+              {...dropdownMotionProps(reduceMotion)}
             >
-              <span className="ico">⎋</span> Sign out
-            </button>
-          </div>
-        )}
+              <div className="card-pad stack">
+                <strong>{session.name}</strong>
+                <span className="cell-sub">{session.email}</span>
+              </div>
+              <div className="divider" style={{ margin: 0 }} />
+              <button
+                className="nav-item"
+                style={{ width: '100%' }}
+                onClick={() => {
+                  logout();
+                  router.push('/login');
+                }}
+              >
+                <span className="ico">⎋</span> Sign out
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {switcher && (
